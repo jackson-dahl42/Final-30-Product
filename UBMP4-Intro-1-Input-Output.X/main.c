@@ -36,10 +36,11 @@
 //---------------------INIT IO -----------------------------------
 void initIO(void){
     OSCCON = 0b00110100;  // Internal oscillator = 4MHz (for now)
-    TRISC=0b00000000;
+    TRISC=0b00000011;
     PORTC=0b00000000;
-    ANSELC=0b00000000;
+    ANSELC=0b00000011;
     TRISB=0b11110000;
+    WPUB=0b11110000;
     PORTB=0b00000000;
     ANSELB=0b00000000;
     TRISA=0b00001111;
@@ -111,7 +112,14 @@ void lcd_data (unsigned char dat)
 
 //--------------------- CUSTOM CHARACTERS -------------------------
 
-unsigned char Pattern1 [ ] = { 0x0e, 0x0e, 0x04, 0x04, 0x1f, 0x04, 0x0a, 0x0a } ; // Stick figure
+unsigned char Pattern1 [ ] = { 0b00000,
+                               0b00000,
+                               0b00000,
+                               0b00000,
+                               0b11111, 
+                               0b11111,
+                               0b11111,
+                               0b11111} ; // Stick figure
 
 void CreateCustomCharacter (unsigned char *Pattern, const char Location)
 { 
@@ -179,7 +187,11 @@ void lcd_LINE2(void)
     lcd_SetCursor(lcdLINE2);
 }
 
+
+
 //======================= MAIN =====================================
+
+int pos = 0;
 
 void main (void)
 {
@@ -189,11 +201,27 @@ void main (void)
     __delay_ms(300);        // power up delay for LCD - adjust as necessary
     lcd_init();             // init the LCD
     CreateCustomCharacter(Pattern1,1);     /*Create Man pattern at 2nd */
-    lcd_cmd (0x86) ;    //Place cursor at 6th position of first row 
+    lcd_SetCursor(pos);
     lcd_data(1);
 
     while(1)
     {
+        if(SW2 == 0)
+        {
+            pos = pos + 1;
+            __delay_ms(100);
+            lcd_cmd(0x01);
+            lcd_SetCursor(pos);
+            lcd_data(1);
+        }
+        if(SW3 == 0)
+        {
+            pos = pos - 1;
+            __delay_ms(100);
+            lcd_cmd(0x01);
+            lcd_SetCursor(pos);
+            lcd_data(1);
+        }
         if(SW1 == 0)
         {
             lcd_cmd(0x01);
