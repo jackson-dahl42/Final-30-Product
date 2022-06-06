@@ -17,36 +17,6 @@
 
 // TODO Initialize oscillator, ports and other PIC/UBMP hardware features here:
 
-// Configure oscillator for 48 MHz operation (required for USB bootloader).
-void OSC_config(void)
-{
-    OSCCON = 0xFC;              // Set 16MHz HFINTOSC with 3x PLL enabled
-    ACTCON = 0x90;              // Enable active clock tuning from USB clock
-    while(!PLLRDY);             // Wait for PLL lock (disable for simulation)
-}
-
-// Configure hardware ports and peripherals for on-board UBMP4 I/O devices.
-void UBMP4_config(void)
-{
-    OPTION_REG = 0b01010111;    // Enable port pull-ups, TMR0 internal, div-256
-
-    LATA = 0b00000000;          // Clear Port A latches before configuring PORTA
-    TRISA = 0b00001111;         // Set RUNLED and Beeper pins as outputs
-    ANSELA = 0b00000000;        // Make all Port A pins digital
-    WPUA = 0b00001000;          // Enable weak pull-up on SW1 input only
-
-    LATB = 0b00000000;          // Clear Port B latches before configuring PORTB
-    TRISB = 0b11110000;         // Enable pushbutton pins as inputs (SW2-SW5)
-    ANSELB = 0b00000000;        // Make all Port B pins digital
-    WPUB = 0b11110000;          // Enable weak pull-ups on pushbutton inputs
-
-    LATC = 0b00000000;          // Clear Port C latches before configuring PORTC
-    TRISC = 0b00001111;         // Set LED pins as outputs, H1-H4 pins as inputs
-    ANSELC = 0b00000000;        // Make all Port C pins digital
-
-    // Enable interrupts here, if required.
-}
-
 // Configure ADC for 8-bit conversion from on-board phototransistor Q1 (AN7).
 void ADC_config(void)
 {

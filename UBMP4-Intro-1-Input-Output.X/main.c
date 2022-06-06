@@ -7,6 +7,9 @@
 // PIC16F1459 Configuration Bit Settings
 // 'C' source line config statements
 #include <xc.h>
+#include "UBMP4.h"
+
+
 // #pragma config statements should precede project file includes.
 // Use project enums instead of #define for ON and OFF.
 // CONFIG1
@@ -31,7 +34,15 @@
 #pragma config LVP = OFF        // Low-Voltage Programming Enable (High-voltage on MCLR/VPP must be used for programming)
 
 #define _XTAL_FREQ 4000000      // 4MHz for now
+#define SW1         PORTAbits.RA3   // S1/Reset pushbutton input
+#define SW2         PORTBbits.RB4   // Pushbutton SW2 input
+#define SW3         PORTBbits.RB5   // Pushbutton SW3 input
+#define SW4         PORTBbits.RB6   // Pushbutton SW4 input
+#define SW5         PORTBbits.RB7   // Pushbutton SW5 input
 
+
+// Enable ADC and switch the input mux to the specified channel (use channel
+// constants defined in UBMP4.h header file - eg. ANQ1).
 
 //---------------------INIT IO -----------------------------------
 void initIO(void){
@@ -47,6 +58,8 @@ void initIO(void){
     PORTA=0b00100000;
     ANSELA=0b00000000;
 }
+// Enable ADC and switch the input mux to the specified channel (use channel
+// constants defined in UBMP4.h header file - eg. ANQ1).
 
 //---------------------IO DEFINITIONS  --------------------------
 // These are for the 1459 - 1787 uses same..
@@ -54,11 +67,7 @@ void initIO(void){
 // RC7-4 is the LCD 4 bit databus
 #define LCD_RSout LATC2     // moved from ICSP
 #define LCD_ENout LATC3
-#define SW1 PORTAbits.RA3
-#define SW2 PORTBbits.RB4   // Pushbutton SW2 input
-#define SW3 PORTBbits.RB5   // Pushbutton SW3 input
-#define SW4 PORTBbits.RB6   // Pushbutton SW4 input
-#define SW5 PORTBbits.RB7   // Pushbutton SW5 input
+
 // RC0,RC1 reserved for ICSP DEBUG
 
 //-------------------- DISPLAY SETTINGS  ---------------------
@@ -112,14 +121,14 @@ void lcd_data (unsigned char dat)
 
 //--------------------- CUSTOM CHARACTERS -------------------------
 
-unsigned char Pattern1 [ ] = { 0b00000,
-                               0b00000,
-                               0b00000,
-                               0b00000,
-                               0b11111, 
+unsigned char Pattern1 [ ] = { 0b01110,
+                               0b01110,
+                               0b00100,
                                0b11111,
-                               0b11111,
-                               0b11111} ; // Stick figure
+                               0b00100, 
+                               0b00100,
+                               0b01010,
+                               0b01010} ; // Stick figure
 
 void CreateCustomCharacter (unsigned char *Pattern, const char Location)
 { 
@@ -187,16 +196,14 @@ void lcd_LINE2(void)
     lcd_SetCursor(lcdLINE2);
 }
 
-
-
 //======================= MAIN =====================================
 
 int pos = 0;
-
+int x, y;
 void main (void)
 {
     unsigned char i;
-
+    
     initIO();               // init the chip IO
     __delay_ms(300);        // power up delay for LCD - adjust as necessary
     lcd_init();             // init the LCD
@@ -206,15 +213,10 @@ void main (void)
 
     while(1)
     {
-        if(SW2 == 0)
-        {
-            pos = pos + 1;
-            __delay_ms(100);
-            lcd_cmd(0x01);
-            lcd_SetCursor(pos);
-            lcd_data(1);
-        }
-        if(SW3 == 0)
+        x = ADC_read_channel(ANH1);
+        y = ADC_read_channel(ANH2);
+
+        if(x > 200)
         {
             pos = pos - 1;
             __delay_ms(100);
@@ -222,6 +224,15 @@ void main (void)
             lcd_SetCursor(pos);
             lcd_data(1);
         }
+        if(x < 100)
+        {
+            pos = pos + 1;
+            __delay_ms(100);
+            lcd_cmd(0x01);
+            lcd_SetCursor(pos);
+            lcd_data(1);
+        }
+
         if(SW1 == 0)
         {
             lcd_cmd(0x01);

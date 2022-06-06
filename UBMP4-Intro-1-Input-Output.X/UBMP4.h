@@ -21,59 +21,6 @@
 
 // TODO - Add/modify user constant definitions for UBMP hardware here.
 
-// PORTA I/O pin definitions
-#define SW1         PORTAbits.RA3   // S1/Reset pushbutton input
-#define BEEPER      LATAbits.LATA4  // Piezo beeper (LS1) output
-#define	LS1         LATAbits.LATA4  // Piezo beeper (LS1) output
-#define D1          LATAbits.LATA5  // LED D1/Run LED output (active-low)
-#define LED1        LATAbits.LATA5  // LED D1/Run LED output (active-low)
-#define RUNLED      LATAbits.LATA5  // LED D1/Run LED output (active-low)
-
-// PORTB I/O pin definitions
-#define SW2         PORTBbits.RB4   // Pushbutton SW2 input
-#define SW3         PORTBbits.RB5   // Pushbutton SW3 input
-#define SW4         PORTBbits.RB6   // Pushbutton SW4 input
-#define SW5         PORTBbits.RB7   // Pushbutton SW5 input
-
-// PORTC I/O pin definitions
-#define H1IN        PORTCbits.RC0   // External I/O header H1 input
-#define H1OUT       LATCbits.LATC0  // External I/O header H1 output
-
-#define H2IN        PORTCbits.RC1   // External I/O header H2 input
-#define H2OUT       LATCbits.LATC1  // External I/O header H2 output
-
-#define H3IN        PORTCbits.RC2   // External I/O header H3 input
-#define H3OUT       LATCbits.LATC2  // External I/O header H3 output 
-#define IR          PORTCbits.RC2   // IR demodulator (U2) input
-#define U2          PORTCbits.RC2   // IR demodulator (U2) input
-
-#define H4IN        PORTCbits.RC3   // External I/O header H4 input
-#define H4OUT       LATCbits.LATC3  // External I/O header H4 output
-#define Q1          PORTCbits.RC3   // Phototransistor/ambient light sensor (Q1) input
-
-#define H5IN        PORTCbits.RC4   // External I/O header H5 input
-#define H5OUT       LATCbits.LATC4  // External I/O header H5 output
-#define D3          LATCbits.LATC4  // LED D3 output
-#define LED3        LATCbits.LATC4  // LED D3 output
-
-#define H6IN        PORTCbits.RC5   // External I/O header H6 input
-#define H6OUT       LATCbits.LATC5  // External I/O header H6 output
-#define D4          LATCbits.LATC5  // LED D4 output
-#define LED4        LATCbits.LATC5  // LED D4 output
-#define D2          LATCbits.LATC5  // LED D2/IR LED output
-#define LED2        LATCbits.LATC5  // LED D2/IR LED output
-#define IRLED       LATCbits.LATC5  // LED2/IR LED output
-
-#define H7IN        PORTCbits.RC6   // External I/O header H7 input
-#define H7OUT       LATCbits.LATC6  // External I/O header H7 output
-#define D5          LATCbits.LATC6  // LED D5 output
-#define LED5        LATCbits.LATC6  // LED D5 output
-
-#define H8IN        PORTCbits.RC7   // External I/O header H8 input
-#define H8OUT       LATCbits.LATC7  // External I/O header H8 output
-#define D6          LATCbits.LATC7  // LED D6 output
-#define LED6        LATCbits.LATC7  // LED D6 output
-
 // ADC (A-D converter) input channel definitions for read_ADC() function
 #define AN4         0b00010000      // A-D converter channel 4 input
 #define ANH1        0b00010000      // External H1 header analogue input (Ch4))
@@ -148,4 +95,3 @@ unsigned char ADC_read(void);
 unsigned char ADC_read_channel(unsigned char);
 
 // TODO - Add additional function prototypes for new functions in UBMP4.c here.
-
