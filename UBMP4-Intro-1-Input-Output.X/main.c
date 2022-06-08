@@ -8,7 +8,7 @@
 // 'C' source line config statements
 #include <xc.h>
 #include "UBMP4.h"
-
+#include "stdbool.h"
 
 // #pragma config statements should precede project file includes.
 // Use project enums instead of #define for ON and OFF.
@@ -121,15 +121,6 @@ void lcd_data (unsigned char dat)
 
 //--------------------- CUSTOM CHARACTERS -------------------------
 
-unsigned char Pattern1 [ ] = { 0b01110,
-                               0b01110,
-                               0b00100,
-                               0b11111,
-                               0b00100, 
-                               0b00100,
-                               0b01010,
-                               0b01010} ; // Stick figure
-
 void CreateCustomCharacter (unsigned char *Pattern, const char Location)
 { 
 int i=0; 
@@ -197,9 +188,60 @@ void lcd_LINE2(void)
 }
 
 //======================= MAIN =====================================
+unsigned char dinosaur1 [ ] = { 0b00111,
+	                            0b01010,
+	                            0b01111,
+	                            0b01110,
+	                            0b01110,
+	                            0b11110,
+	                            0b01010,
+	                            0b01111 } ;
 
-int pos = 0;
+unsigned char dinosaur2 [ ] = { 0b00111,
+	                            0b01010,
+	                            0b01111,
+	                            0b01110,
+	                            0b01110,
+	                            0b11110,
+	                            0b01011,
+	                            0b01100 } ;
+
+unsigned char cactus [ ] = { 0b00100,
+	                         0b10100,
+	                         0b10100,
+	                         0b10101,
+	                         0b11101,
+	                         0b00111,
+	                         0b00100,
+	                         0b00100} ; // Cactus
+
+unsigned char bird1 [ ] = {	0b00000,
+	                        0b00000,
+	                        0b00000,
+	                        0b01000,
+	                        0b11111,
+	                        0b00110,
+	                        0b00110,
+	                        0b00100 } ; // bird sprite 1
+
+unsigned char bird2 [ ] = {	0b00000,
+	                        0b00100,
+	                        0b00110,
+	                        0b01110,
+	                        0b11111,
+	                        0b00000,
+	                        0b00000,
+	                        0b00000 } ; // bird sprite 2
+bool jumping = false;
+char jump_count = 0;
+char animation_count = 0;
 int x, y;
+char dino = 0;
+char bird = 3;
+bool bird_animation = false;
+char dino_pos = 64;
+char cactus1_pos = 79;
+signed char bird_pos = 22;
 void main (void)
 {
     unsigned char i;
@@ -207,31 +249,82 @@ void main (void)
     initIO();               // init the chip IO
     __delay_ms(300);        // power up delay for LCD - adjust as necessary
     lcd_init();             // init the LCD
-    CreateCustomCharacter(Pattern1,1);     /*Create Man pattern at 2nd */
-    lcd_SetCursor(pos);
-    lcd_data(1);
+    CreateCustomCharacter(dinosaur1,0);
+    CreateCustomCharacter(dinosaur2,1);
+    CreateCustomCharacter(cactus,2);
+    CreateCustomCharacter(bird1,3);
+    CreateCustomCharacter(bird2,4);
 
     while(1)
     {
         x = ADC_read_channel(ANH1);
         y = ADC_read_channel(ANH2);
 
-        if(x > 200)
+        // Animations
+        if(bird_animation == true)
         {
-            pos = pos - 1;
-            __delay_ms(100);
-            lcd_cmd(0x01);
-            lcd_SetCursor(pos);
-            lcd_data(1);
+            bird = 3;
         }
-        if(x < 100)
+        if(bird_animation == false)
         {
-            pos = pos + 1;
-            __delay_ms(100);
-            lcd_cmd(0x01);
-            lcd_SetCursor(pos);
-            lcd_data(1);
+            bird = 4;
         }
+        animation_count += 1;
+        if(animation_count == 4)
+        {
+            bird_animation = !bird_animation;
+            animation_count = 0;
+        }
+
+        // Obstacle movement
+        
+        cactus1_pos -= 1;
+        bird_pos -= 1;
+
+        if(cactus1_pos < 63)
+        {
+            cactus1_pos = 79;
+        }
+
+        if(bird_pos < 0)
+        {
+            bird_pos = 16;
+        }
+
+        // Dino jumping
+        if(y < 100 && jumping == false)
+        {
+            jumping = true;
+        }
+        if(jumping == true)
+        {
+            dino_pos = 0;
+            jump_count += 1;
+            if(jump_count == 10)
+            {
+                jumping = false;
+                jump_count = 0;
+                dino_pos = 63;
+            }
+        }
+
+        // Hit detection and game over
+        if(cactus1_pos == dino_pos || bird_pos == dino_pos)
+        {
+           lcd_cmd(0x01);
+           lcd_SetCursor(0);
+           lcd_WriteStr("Game Over");
+           break;
+        }
+
+        // Update LCD
+        lcd_cmd(0x01);
+        lcd_SetCursor(dino_pos);
+        lcd_data(dino);
+        lcd_SetCursor(cactus1_pos);
+        lcd_data(2);
+        lcd_SetCursor(bird_pos);
+        lcd_data(bird);
 
         if(SW1 == 0)
         {
@@ -240,5 +333,7 @@ void main (void)
             lcd_init();
             RESET();
         }
+
+        __delay_ms(100);
     }
 }
