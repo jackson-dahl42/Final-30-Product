@@ -1,6 +1,6 @@
 /*==============================================================================
  Project: Final 30 Product
- Date:    May 16, 2021
+ Date:    June 9, 2022
 ==============================================================================*/
 
 //-------------------------- BUILD FOR 16F1459  ---------------------------------
@@ -82,7 +82,7 @@ int strobeLCD(void)
 {
 LCD_ENout = 1;
 __delay_us(2);     // Added a little here
-LCD_ENout = 0;
+LCD_ENout = 0; 
 }
 //--------------------- WRITE 8 BIT DATA TO LCD  -----------------
 // Assumes LCD is ready and RS is set to correct value
@@ -119,7 +119,7 @@ void lcd_data (unsigned char dat)
     writeLCD(dat);
 }
 
-//--------------------- CUSTOM CHARACTERS -------------------------
+//--------------------- CREATE CUSTOM CHARACTER -------------------------
 
 void CreateCustomCharacter (unsigned char *Pattern, const char Location)
 { 
@@ -187,61 +187,128 @@ void lcd_LINE2(void)
     lcd_SetCursor(lcdLINE2);
 }
 
+//----------------- CUSTOM CHARACTERS --------------------------
+
+unsigned char dinosaur1 [ ] = { 
+    0b00111,
+	0b01010,
+	0b01111,
+	0b01110,
+	0b01110,
+	0b11110,
+	0b01110,
+	0b00011 
+};
+
+unsigned char dinosaur2 [ ] = { 
+    0b00111,
+	0b01010,
+	0b01111,
+    0b01110,
+	0b01110,
+	0b11110,
+	0b01011,
+	0b01100 
+};
+
+unsigned char cactus [ ] = { 
+    0b00100,
+	0b10100,
+	0b10100,
+	0b10101,
+	0b11101,
+    0b00111,
+	0b00100,
+	0b00100
+};
+
+unsigned char bird1 [ ] = { 
+    0b00000,
+	0b00000,
+	0b00000,
+	0b01000,
+	0b11111,
+	0b00110,
+	0b00110,
+	0b00100 
+};
+
+unsigned char bird2 [ ] = {	
+    0b00000,
+	0b00100,
+	0b00110,
+	0b01110,
+    0b11111,
+	0b00000,
+	0b00000,
+	0b00000 
+};
+
+unsigned char top_left_corner[] = {
+	0b00111,
+	0b01000,
+	0b10011,
+	0b10100,
+	0b10100,
+	0b10100,
+	0b10100,
+	0b10100
+};
+
+unsigned char top_right_corner[] = {
+	0b11100,
+	0b00010,
+	0b11001,
+	0b00101,
+	0b00101,
+	0b00101,
+	0b00101,
+	0b00101
+};
+
+unsigned char bottom_right_corner[] = {
+	0b00101,
+	0b00101,
+	0b00101,
+	0b00101,
+	0b00101,
+	0b11001,
+	0b00010,
+	0b11100
+};
+
+unsigned char bottom_left_corner[] = {
+	0b10100,
+	0b10100,
+	0b10100,
+	0b10100,
+	0b10100,
+	0b10011,
+	0b01000,
+	0b00111
+};
+
 //======================= MAIN =====================================
-unsigned char dinosaur1 [ ] = { 0b00111,
-	                            0b01010,
-	                            0b01111,
-	                            0b01110,
-	                            0b01110,
-	                            0b11110,
-	                            0b01010,
-	                            0b01111 } ;
 
-unsigned char dinosaur2 [ ] = { 0b00111,
-	                            0b01010,
-	                            0b01111,
-	                            0b01110,
-	                            0b01110,
-	                            0b11110,
-	                            0b01011,
-	                            0b01100 } ;
+#ifdef dino_game
 
-unsigned char cactus [ ] = { 0b00100,
-	                         0b10100,
-	                         0b10100,
-	                         0b10101,
-	                         0b11101,
-	                         0b00111,
-	                         0b00100,
-	                         0b00100} ; // Cactus
-
-unsigned char bird1 [ ] = {	0b00000,
-	                        0b00000,
-	                        0b00000,
-	                        0b01000,
-	                        0b11111,
-	                        0b00110,
-	                        0b00110,
-	                        0b00100 } ; // bird sprite 1
-
-unsigned char bird2 [ ] = {	0b00000,
-	                        0b00100,
-	                        0b00110,
-	                        0b01110,
-	                        0b11111,
-	                        0b00000,
-	                        0b00000,
-	                        0b00000 } ; // bird sprite 2
 bool jumping = false;
 char jump_count = 0;
 char animation_count = 0;
 int x, y;
+int speed_count = 0;
+int speed = 3;
+int loop_count = 0;
+bool second_cactus = false;
 char dino = 0;
+bool dino_animation = false;
 char bird = 3;
 bool bird_animation = false;
 char dino_pos = 64;
 char cactus1_pos = 79;
+char cactus2_pos = 80;
 signed char bird_pos = 22;
+
 void main (void)
 {
     unsigned char i;
@@ -269,18 +336,55 @@ void main (void)
         {
             bird = 4;
         }
+
+        if(dino_animation == true)
+        {
+            dino = 0;
+        }
+        if(dino_animation == false)
+        {
+            dino = 1;
+        }
         animation_count += 1;
         if(animation_count == 4)
         {
             bird_animation = !bird_animation;
+            dino_animation = !dino_animation;
             animation_count = 0;
         }
 
         // Obstacle movement
-        
-        cactus1_pos -= 1;
-        bird_pos -= 1;
 
+        speed_count += 1;
+        loop_count += 1;
+
+        if(loop_count == 100)
+        {
+            speed = 2;
+        }
+
+        if(loop_count == 200)
+        {
+            speed = 1;
+        }
+
+        if(loop_count == 300)
+        {
+            second_cactus = true;
+        }
+
+
+        if(speed_count == speed)
+        {
+            cactus1_pos -= 1;
+            bird_pos -= 1;
+            speed_count = 0;
+        }
+
+        if(second_cactus == true)
+        {
+            cactus2_pos = cactus1_pos + 1;
+        }
         if(cactus1_pos < 63)
         {
             cactus1_pos = 79;
@@ -323,6 +427,8 @@ void main (void)
         lcd_data(dino);
         lcd_SetCursor(cactus1_pos);
         lcd_data(2);
+        lcd_SetCursor(cactus2_pos);
+        lcd_data(2);
         lcd_SetCursor(bird_pos);
         lcd_data(bird);
 
@@ -337,3 +443,5 @@ void main (void)
         __delay_ms(100);
     }
 }
+
+#endif
