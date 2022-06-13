@@ -6,9 +6,13 @@
 //-------------------------- BUILD FOR 16F1459  ---------------------------------
 // PIC16F1459 Configuration Bit Settings
 // 'C' source line config statements
-#include <xc.h>
+
 #include "UBMP4.h"
-#include "stdbool.h"
+#include <xc.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
 
 // #pragma config statements should precede project file includes.
 // Use project enums instead of #define for ON and OFF.
@@ -39,6 +43,7 @@
 #define SW3         PORTBbits.RB5   // Pushbutton SW3 input
 #define SW4         PORTBbits.RB6   // Pushbutton SW4 input
 #define SW5         PORTBbits.RB7   // Pushbutton SW5 input
+#define BEEPER      LATAbits.LATA4  // Piezo beeper (LS1) output
 
 
 // Enable ADC and switch the input mux to the specified channel (use channel
@@ -244,54 +249,9 @@ unsigned char bird2 [ ] = {
 	0b00000 
 };
 
-unsigned char top_left_corner[] = {
-	0b00111,
-	0b01000,
-	0b10011,
-	0b10100,
-	0b10100,
-	0b10100,
-	0b10100,
-	0b10100
-};
-
-unsigned char top_right_corner[] = {
-	0b11100,
-	0b00010,
-	0b11001,
-	0b00101,
-	0b00101,
-	0b00101,
-	0b00101,
-	0b00101
-};
-
-unsigned char bottom_right_corner[] = {
-	0b00101,
-	0b00101,
-	0b00101,
-	0b00101,
-	0b00101,
-	0b11001,
-	0b00010,
-	0b11100
-};
-
-unsigned char bottom_left_corner[] = {
-	0b10100,
-	0b10100,
-	0b10100,
-	0b10100,
-	0b10100,
-	0b10011,
-	0b01000,
-	0b00111
-};
-
 //======================= MAIN =====================================
 
-#ifdef dino_game
-
+int SW2_count = 0;
 bool jumping = false;
 char jump_count = 0;
 char animation_count = 0;
@@ -308,129 +268,186 @@ char dino_pos = 64;
 char cactus1_pos = 79;
 char cactus2_pos = 80;
 signed char bird_pos = 22;
+int score = 0;
+score_lcd = " ";
+bool dino_game = false;
 
-void main (void)
+void main(void)
 {
     unsigned char i;
     
     initIO();               // init the chip IO
     __delay_ms(300);        // power up delay for LCD - adjust as necessary
     lcd_init();             // init the LCD
-    CreateCustomCharacter(dinosaur1,0);
-    CreateCustomCharacter(dinosaur2,1);
-    CreateCustomCharacter(cactus,2);
-    CreateCustomCharacter(bird1,3);
-    CreateCustomCharacter(bird2,4);
+
+    lcd_SetCursor(3);
+    lcd_WriteStr("UBMP4 Game");
+    lcd_SetCursor(68);
+    lcd_WriteStr("Console!");
 
     while(1)
     {
-        x = ADC_read_channel(ANH1);
-        y = ADC_read_channel(ANH2);
-
-        // Animations
-        if(bird_animation == true)
+        if(SW2 == 0)
         {
-            bird = 3;
-        }
-        if(bird_animation == false)
-        {
-            bird = 4;
+            SW2_count += 1;
         }
 
-        if(dino_animation == true)
+        if(SW2_count == 1)
         {
-            dino = 0;
-        }
-        if(dino_animation == false)
-        {
-            dino = 1;
-        }
-        animation_count += 1;
-        if(animation_count == 4)
-        {
-            bird_animation = !bird_animation;
-            dino_animation = !dino_animation;
-            animation_count = 0;
+            lcd_cmd(0x01);
+            lcd_WriteStr("Dinosaur Game<");
         }
 
-        // Obstacle movement
-
-        speed_count += 1;
-        loop_count += 1;
-
-        if(loop_count == 100)
-        {
-            speed = 2;
+        if(SW2 == 0 && SW2_count == 2)
+        {   
+            dino_game = true;
         }
 
-        if(loop_count == 200)
+        if(dino_game == true)
         {
-            speed = 1;
-        }
+        CreateCustomCharacter(dinosaur1,0);
+        CreateCustomCharacter(dinosaur2,1);
+        CreateCustomCharacter(cactus,2);
+        CreateCustomCharacter(bird1,3);
+        CreateCustomCharacter(bird2,4);
 
-        if(loop_count == 300)
+        while(dino_game == true)
         {
-            second_cactus = true;
-        }
+            time_t t;
+            srand((unsigned) time(&t));
 
+            x = ADC_read_channel(ANH1);
+            y = ADC_read_channel(ANH2);
 
-        if(speed_count == speed)
-        {
-            cactus1_pos -= 1;
-            bird_pos -= 1;
-            speed_count = 0;
-        }
-
-        if(second_cactus == true)
-        {
-            cactus2_pos = cactus1_pos + 1;
-        }
-        if(cactus1_pos < 63)
-        {
-            cactus1_pos = 79;
-        }
-
-        if(bird_pos < 0)
-        {
-            bird_pos = 16;
-        }
-
-        // Dino jumping
-        if(y < 100 && jumping == false)
-        {
-            jumping = true;
-        }
-        if(jumping == true)
-        {
-            dino_pos = 0;
-            jump_count += 1;
-            if(jump_count == 10)
+            // Animations
+            if(bird_animation == true)
             {
-                jumping = false;
-                jump_count = 0;
-                dino_pos = 63;
+                bird = 3;
             }
+
+            if(bird_animation == false)
+            {
+                bird = 4;
+            }
+
+            if(dino_animation == true)
+            {
+                dino = 0;
+            }
+
+            if(dino_animation == false)
+            {
+                dino = 1;
+            }
+
+            animation_count += 1;
+
+            if(animation_count == 4)
+            {
+                bird_animation = !bird_animation;
+                dino_animation = !dino_animation;
+                animation_count = 0;
+            }
+
+            // Obstacle movement
+
+            speed_count += 1;
+            loop_count += 1;
+
+            if(loop_count == 100)
+            {
+                speed = 2;
+            }
+
+            if(loop_count == 200)
+            {
+                speed = 1;
+            }
+
+            if(loop_count == 300)
+            {
+                second_cactus = true;
+            }
+
+            if(speed_count == speed)
+            {
+                cactus1_pos -= 1;
+                bird_pos -= 1;
+                speed_count = 0;
+            }
+
+            if(second_cactus == true)
+            {
+                cactus2_pos = cactus1_pos + 2;
+            }
+
+            if(cactus1_pos < 63)
+            {
+                cactus1_pos = 79 + (rand() % 5);
+                score += 1;
+            }
+
+            if(bird_pos < 0)
+            {
+                bird_pos = 16 + (rand() % 5);
+                score += 1;
+            }
+
+            // Dino jumping
+            if(y < 100 && jumping == false)
+            {
+                jumping = true;
+            }
+
+            if(jumping == true)
+            {
+                BEEPER = !BEEPER;
+                dino_pos = 0;
+                jump_count += 1;
+
+                if(jump_count == 10)
+                {
+                    jumping = false;
+                    jump_count = 0;
+                    dino_pos = 63;
+                }
+            }
+
+            // Update LCD
+            lcd_cmd(0x01);
+            lcd_SetCursor(dino_pos);
+            lcd_data(dino);
+            lcd_SetCursor(cactus1_pos);
+            lcd_data(2);
+            lcd_SetCursor(cactus2_pos);
+            lcd_data(2);
+            lcd_SetCursor(bird_pos);
+            lcd_data(bird);
+
+            // Hit detection and game over
+            if(cactus1_pos == dino_pos || bird_pos == dino_pos || cactus2_pos == dino_pos)
+            {
+                lcd_cmd(0x01);
+                lcd_SetCursor(0);
+                lcd_WriteStr("Game Over");
+                lcd_SetCursor(63);
+                lcd_WriteStr("Score: ");
+                lcd_WriteStr(score);
+                __delay_ms(1000);
+                dino_game = false;
+            }
+
+            if(SW1 == 0)
+            {
+                lcd_cmd(0x01);
+                __delay_ms(300);
+                lcd_init();
+                RESET();
+            }
+            __delay_ms(100);
         }
 
-        // Hit detection and game over
-        if(cactus1_pos == dino_pos || bird_pos == dino_pos)
-        {
-           lcd_cmd(0x01);
-           lcd_SetCursor(0);
-           lcd_WriteStr("Game Over");
-           break;
         }
-
-        // Update LCD
-        lcd_cmd(0x01);
-        lcd_SetCursor(dino_pos);
-        lcd_data(dino);
-        lcd_SetCursor(cactus1_pos);
-        lcd_data(2);
-        lcd_SetCursor(cactus2_pos);
-        lcd_data(2);
-        lcd_SetCursor(bird_pos);
-        lcd_data(bird);
 
         if(SW1 == 0)
         {
@@ -439,9 +456,5 @@ void main (void)
             lcd_init();
             RESET();
         }
-
-        __delay_ms(100);
     }
 }
-
-#endif
