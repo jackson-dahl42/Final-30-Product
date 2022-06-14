@@ -251,7 +251,7 @@ unsigned char bird2 [ ] = {
 
 //======================= MAIN =====================================
 
-int SW2_count = 0;
+int SW2count = 0;
 bool jumping = false;
 char jump_count = 0;
 char animation_count = 0;
@@ -268,9 +268,9 @@ char dino_pos = 64;
 char cactus1_pos = 79;
 char cactus2_pos = 80;
 signed char bird_pos = 22;
-int score = 0;
-score_lcd = " ";
 bool dino_game = false;
+int score = 0;
+bool SW2Pressed = false;
 
 void main(void)
 {
@@ -287,19 +287,30 @@ void main(void)
 
     while(1)
     {
-        if(SW2 == 0)
+        if(SW2 == 0 && SW2Pressed == false)
         {
-            SW2_count += 1;
+           if(SW2count < 255 )
+           {
+               SW2count += 1;
+           }
+           SW2Pressed = true;
         }
 
-        if(SW2_count == 1)
+        if(SW2 == 1)
+        {
+           SW2Pressed = false;
+        }
+
+        if(SW2count == 1)
         {
             lcd_cmd(0x01);
             lcd_WriteStr("Dinosaur Game<");
+            SW2count += 1;
         }
 
-        if(SW2 == 0 && SW2_count == 2)
+        if(SW2count == 3)
         {   
+            SW2count += 5;
             dino_game = true;
         }
 
@@ -359,7 +370,7 @@ void main(void)
                 speed = 2;
             }
 
-            if(loop_count == 200)
+            if(loop_count == 206)
             {
                 speed = 1;
             }
@@ -432,7 +443,9 @@ void main(void)
                 lcd_WriteStr("Game Over");
                 lcd_SetCursor(63);
                 lcd_WriteStr("Score: ");
-                lcd_WriteStr(score);
+                char str[6];
+                sprintf(str, "%d", score);
+                lcd_WriteStr(str);
                 __delay_ms(1000);
                 dino_game = false;
             }
