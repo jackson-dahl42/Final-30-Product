@@ -18,3 +18,7 @@ updated location. Here is an image of the project currently:
 I created the google dinosaur game for the console. It has a dinosaur that jumps using the joystick, a cactus and a bird to avoid, and the game gets
 progressively faster as time goes on. The score and game over screen don't work yet. I will try to create a working menu select screen where you can select the game.
 Also a working game over screen that displays your score.
+
+# June 14, 2020
+I created a proper game over screen that displays the score. Once I add sound effects to the dino game I will try to make a second game. The second one will probably be just as basic as the first. I also added a rand() function to the postion of the cactus and bird, so it should be in a different postion every play, but I can't
+really tell if it is workng.
