@@ -249,6 +249,42 @@ unsigned char bird2 [ ] = {
 	0b00000 
 };
 
+unsigned char spaceship_bottom[] = {
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b11000,
+	0b01111,
+	0b01111,
+	0b11000
+};
+
+unsigned char spaceship_top[] = {
+	0b11000,
+	0b01111,
+	0b01111,
+	0b11000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000
+};
+
+//======================= SFX =====================================
+
+void tone(unsigned char period)
+{       
+    if(period != 0)
+    {
+        for(unsigned char cycles = 50; cycles != 0; cycles--)
+        {
+            BEEPER = !BEEPER;
+            for(unsigned int p = period; p != 0; p--);
+        }
+    }
+}
+
 //======================= MAIN =====================================
 
 int SW2count = 0;
@@ -269,6 +305,8 @@ char cactus1_pos = 79;
 char cactus2_pos = 80;
 signed char bird_pos = 22;
 bool dino_game = false;
+bool defender_game = false;
+bool game_1 = true;
 int score = 0;
 bool SW2Pressed = false;
 
@@ -287,12 +325,15 @@ void main(void)
 
     while(1)
     {
+        y = ADC_read_channel(ANH2);
+
         if(SW2 == 0 && SW2Pressed == false)
         {
            if(SW2count < 255 )
            {
                SW2count += 1;
            }
+           tone(10);
            SW2Pressed = true;
         }
 
@@ -305,15 +346,46 @@ void main(void)
         {
             lcd_cmd(0x01);
             lcd_WriteStr("Dinosaur Game<");
+            lcd_SetCursor(63);
+            lcd_WriteStr("Defender");
+            game_1 = true;
             SW2count += 1;
         }
 
-        if(SW2count == 3)
+        
+        if(y < 100)
+        {
+            lcd_cmd(0x01);
+            lcd_SetCursor(0);
+            lcd_WriteStr("Dinosaur Game<");
+            lcd_SetCursor(63);
+            lcd_WriteStr("Defender");
+            game_1 = true;
+        }
+
+        if(y > 250)
+        {
+            lcd_cmd(0x01);
+            lcd_SetCursor(0);
+            lcd_WriteStr("Dinosaur Game");
+            lcd_SetCursor(63);
+            lcd_WriteStr("Defender<");
+            game_1 = false;
+        }
+
+        if(SW2count == 3 && game_1 == true)
         {   
             SW2count += 5;
             dino_game = true;
         }
 
+        if(SW2count == 3 && game_1 == false)
+        {
+            SW2count += 5;
+            defender_game = true;
+        }
+
+        // Dinosaur game
         if(dino_game == true)
         {
         CreateCustomCharacter(dinosaur1,0);
@@ -327,7 +399,6 @@ void main(void)
             time_t t;
             srand((unsigned) time(&t));
 
-            x = ADC_read_channel(ANH1);
             y = ADC_read_channel(ANH2);
 
             // Animations
@@ -408,11 +479,11 @@ void main(void)
             if(y < 100 && jumping == false)
             {
                 jumping = true;
+                tone(100);                                
             }
 
             if(jumping == true)
             {
-                BEEPER = !BEEPER;
                 dino_pos = 0;
                 jump_count += 1;
 
@@ -460,6 +531,66 @@ void main(void)
             __delay_ms(100);
         }
 
+    }
+
+
+        if(defender_game == true)
+        {
+            CreateCustomCharacter(spaceship_top,0);
+            CreateCustomCharacter(spaceship_bottom,1);
+            int spaceship_x = 0;
+            int spaceship_y = 4;
+            int spaceship_pos = 0;
+
+            while(defender_game == true)
+            {
+                x = ADC_read_channel(ANH1);
+                y = ADC_read_channel(ANH2);
+
+                if(y < 100 && spaceship_y < 4)
+                {
+                    spaceship_y += 1;
+                }
+
+                if(y > 250 && spaceship_y > 1)
+                {
+                    spaceship_y -= 1;
+                }
+
+                // Update LCD
+                lcd_cmd(0x01);
+                lcd_SetCursor(spaceship_pos);
+
+                if(spaceship_y == 2 || spaceship_y == 4)
+                {
+                    lcd_data(0);
+                }
+
+                if(spaceship_y == 1 || spaceship_y == 3)
+                {
+                    lcd_data(1);
+                }
+
+                if(spaceship_y > 2)
+                {
+                    lcd_cmd(0xc1);
+                }
+
+                if(spaceship_y < 3)
+                {
+                    lcd_cmd(0xc2);
+                }
+
+                if(SW1 == 0)
+                {
+                    lcd_cmd(0x01);
+                    __delay_ms(300);
+                    lcd_init();
+                    RESET();
+                }
+                __delay_ms(100);
+                
+            }
         }
 
         if(SW1 == 0)
