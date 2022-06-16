@@ -552,9 +552,30 @@ void main(void)
                     spaceship_y += 1;
                 }
 
-                if(y > 250 && spaceship_y > 1)
+                if(y > 300 && spaceship_y > 1)
                 {
                     spaceship_y -= 1;
+                }
+                
+                if(x > 150)
+                {
+                    spaceship_x += 1;
+                    spaceship_pos += 1;
+                }
+
+                if(x < 100)
+                {
+                    spaceship_x -= 1;
+                    spaceship_pos -= 1;
+                }
+                if(spaceship_y < 3)
+                {
+                    spaceship_pos += 63;
+                }
+
+                if(spaceship_y > 2)
+                {
+                    spaceship_pos -= 63;
                 }
 
                 // Update LCD
@@ -569,16 +590,6 @@ void main(void)
                 if(spaceship_y == 1 || spaceship_y == 3)
                 {
                     lcd_data(1);
-                }
-
-                if(spaceship_y > 2)
-                {
-                    lcd_cmd(0xc1);
-                }
-
-                if(spaceship_y < 3)
-                {
-                    lcd_cmd(0xc2);
                 }
 
                 if(SW1 == 0)
