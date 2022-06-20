@@ -583,10 +583,9 @@ void main(void)
             int spaceship_y = 4;
             int asteroid1_x = 15;
             int asteroid1_y = 4;
-            int spaceship_pos = 0;
             int laser_x;
             int laser_y;
-            bool laser_true = false;
+            int laser_count = 0;
 
             while(defender_game == true)
             {
@@ -599,12 +598,30 @@ void main(void)
                     asteroid1_x = 15;
                 }
 
-                if(laser_true == false && SW2 == 0)
+                if(laser_count == 0 && SW2 == 0)
                 {
-                    laser_true == true;
+                    laser_count = 1;
                 }
 
-                if(laser)
+                if(laser_count > 0)
+                {
+                    if(laser_count == 1)
+                    {
+                        laser_x = spaceship_x;
+                        laser_y = spaceship_y;
+                        laser_count = 2;
+                    }
+
+                    if(laser_count > 1)
+                    {
+                        laser_x += 1;
+                        if(laser_x > 16)
+                        {
+                            laser_count = 0;
+                        }
+                    }
+                }
+
                 x = ADC_read_channel(ANH1);
                 y = ADC_read_channel(ANH2);
 
@@ -650,6 +667,25 @@ void main(void)
                     lcd_data(1);
                 }
 
+                if(laser_y < 3)
+                {
+                    lcd_SetCursor(laser_x + 64);
+                }
+                if(laser_y > 2)
+                {
+                    lcd_SetCursor(laser_x);
+                }
+
+                if(laser_y == 2 || laser_y == 4)
+                {
+                    lcd_data(4);
+                }
+
+                if(laser_y == 1 || laser_y == 3)
+                {
+                    lcd_data(5);
+                }
+
                 display_asteroid(asteroid1_x, asteroid1_y);
                 
                  
@@ -660,7 +696,7 @@ void main(void)
                     lcd_init();
                     RESET();
                 }
-                __delay_ms(100);
+                __delay_ms(150);
                 
             }
         }
@@ -674,3 +710,4 @@ void main(void)
         }
     }
 }
+
