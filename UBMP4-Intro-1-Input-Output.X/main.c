@@ -13,37 +13,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
-
-// #pragma config statements should precede project file includes.
-// Use project enums instead of #define for ON and OFF.
-// CONFIG1
-#pragma config FOSC = INTOSC    // Oscillator Selection Bits (INTOSC oscillator: I/O function on CLKIN pin)
-#pragma config WDTE = OFF       // Watchdog Timer Enable (WDT disabled)
-#pragma config PWRTE = ON       // Power-up Timer Enable (PWRT enabled)
-#pragma config MCLRE = ON       // MCLR Pin Function Select (MCLR/VPP pin function is MCLR)
-#pragma config CP = OFF         // Flash Program Memory Code Protection (Program memory code protection is disabled)
-#pragma config BOREN = OFF      // Brown-out Reset Enable (Brown-out Reset disabled)
-#pragma config CLKOUTEN = OFF   // Clock Out Enable (CLKOUT function is disabled. I/O or oscillator function on the CLKOUT pin)
-#pragma config IESO = ON        // Internal/External Switchover Mode (Internal/External Switchover Mode is enabled)
-#pragma config FCMEN = ON       // Fail-Safe Clock Monitor Enable (Fail-Safe Clock Monitor is enabled)
-// CONFIG2
-#pragma config WRT = OFF        // Flash Memory Self-Write Protection (Write protection off)
-#pragma config CPUDIV = NOCLKDIV// CPU System Clock Selection Bit (NO CPU system divide)
-#pragma config USBLSCLK = 48MHz // USB Low SPeed Clock Selection bit (System clock expects 48 MHz, FS/LS USB CLKENs divide-by is set to 8.)
-#pragma config PLLMULT = 3x     // PLL Multipler Selection Bit (3x Output Frequency Selected)
-#pragma config PLLEN = ENABLED  // PLL Enable Bit (3x or 4x PLL Enabled)
-#pragma config STVREN = ON      // Stack Overflow/Underflow Reset Enable (Stack Overflow or Underflow will cause a Reset)
-#pragma config BORV = LO        // Brown-out Reset Voltage Selection (Brown-out Reset Voltage (Vbor), low trip point selected.)
-#pragma config LPBOR = OFF      // Low-Power Brown Out Reset (Low-Power BOR is disabled)
-#pragma config LVP = OFF        // Low-Voltage Programming Enable (High-voltage on MCLR/VPP must be used for programming)
-
-#define _XTAL_FREQ 4000000      // 4MHz for now
-#define SW1         PORTAbits.RA3   // S1/Reset pushbutton input
-#define SW2         PORTBbits.RB4   // Pushbutton SW2 input
-#define SW3         PORTBbits.RB5   // Pushbutton SW3 input
-#define SW4         PORTBbits.RB6   // Pushbutton SW4 input
-#define SW5         PORTBbits.RB7   // Pushbutton SW5 input
-#define BEEPER      LATAbits.LATA4  // Piezo beeper (LS1) output
+#include "PIC16F1459config.h"
 
 
 // Enable ADC and switch the input mux to the specified channel (use channel
@@ -271,6 +241,49 @@ unsigned char spaceship_top[] = {
 	0b00000
 };
 
+unsigned char asteroid_bottom[] = {
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b01110,
+	0b01110,
+	0b00000
+};
+
+unsigned char asteroid_top[] = {
+	0b00000,
+	0b01110,
+	0b01110,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000
+};
+
+unsigned char laser_bottom[] = {
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b10101,
+	0b01010,
+	0b00000
+};
+
+unsigned char laser_top[] = {
+	0b00000,
+	0b01010,
+	0b10101,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000
+};
 //======================= SFX =====================================
 
 void tone(unsigned char period)
@@ -285,6 +298,27 @@ void tone(unsigned char period)
     }
 }
 
+            display_asteroid(int asteroid_x, asteroid_y)
+            {
+                if(asteroid_y < 3)
+                {
+                    lcd_SetCursor(asteroid_x + 64);
+                }
+                if(asteroid_y > 2)
+                {
+                    lcd_SetCursor(asteroid_x);
+                }
+
+                if(asteroid_y == 2 || asteroid_y == 4)
+                {
+                    lcd_data(2);
+                }
+
+                if(asteroid_y == 1 || asteroid_y == 3)
+                {
+                    lcd_data(3);
+                }
+            }
 //======================= MAIN =====================================
 
 int SW2count = 0;
@@ -308,6 +342,7 @@ bool dino_game = false;
 bool defender_game = false;
 bool game_1 = true;
 int score = 0;
+int random;
 bool SW2Pressed = false;
 
 void main(void)
@@ -398,6 +433,7 @@ void main(void)
         {
             time_t t;
             srand((unsigned) time(&t));
+            random = rand();
 
             y = ADC_read_channel(ANH2);
 
@@ -465,13 +501,13 @@ void main(void)
 
             if(cactus1_pos < 63)
             {
-                cactus1_pos = 79 + (rand() % 5);
+                cactus1_pos = 79 + (random % 5);
                 score += 1;
-            }
+            } 
 
             if(bird_pos < 0)
             {
-                bird_pos = 16 + (rand() % 5);
+                bird_pos = 16 + (random % 5);
                 score += 1;
             }
 
@@ -538,12 +574,37 @@ void main(void)
         {
             CreateCustomCharacter(spaceship_top,0);
             CreateCustomCharacter(spaceship_bottom,1);
+            CreateCustomCharacter(asteroid_top,2);
+            CreateCustomCharacter(asteroid_bottom,3);
+            CreateCustomCharacter(laser_top,4);
+            CreateCustomCharacter(laser_bottom,5);
+
             int spaceship_x = 0;
             int spaceship_y = 4;
+            int asteroid1_x = 15;
+            int asteroid1_y = 4;
             int spaceship_pos = 0;
+            int laser_x;
+            int laser_y;
+            bool laser_true = false;
 
             while(defender_game == true)
             {
+
+                // Spaceship Movement
+                asteroid1_x -= 1;
+
+                if(asteroid1_x < 0)
+                {
+                    asteroid1_x = 15;
+                }
+
+                if(laser_true == false && SW2 == 0)
+                {
+                    laser_true == true;
+                }
+
+                if(laser)
                 x = ADC_read_channel(ANH1);
                 y = ADC_read_channel(ANH2);
 
@@ -552,35 +613,32 @@ void main(void)
                     spaceship_y += 1;
                 }
 
-                if(y > 300 && spaceship_y > 1)
+                if(y > 200 && spaceship_y > 1)
                 {
                     spaceship_y -= 1;
                 }
                 
-                if(x > 150)
+                if(x > 200 && spaceship_x < 15)
                 {
                     spaceship_x += 1;
-                    spaceship_pos += 1;
                 }
 
-                if(x < 100)
+                if(x < 50 && spaceship_x > 0)
                 {
                     spaceship_x -= 1;
-                    spaceship_pos -= 1;
-                }
-                if(spaceship_y < 3)
-                {
-                    spaceship_pos += 63;
-                }
-
-                if(spaceship_y > 2)
-                {
-                    spaceship_pos -= 63;
                 }
 
                 // Update LCD
                 lcd_cmd(0x01);
-                lcd_SetCursor(spaceship_pos);
+
+                if(spaceship_y < 3)
+                {
+                    lcd_SetCursor(spaceship_x + 64);
+                }
+                if(spaceship_y > 2)
+                {
+                    lcd_SetCursor(spaceship_x);
+                }
 
                 if(spaceship_y == 2 || spaceship_y == 4)
                 {
@@ -592,6 +650,9 @@ void main(void)
                     lcd_data(1);
                 }
 
+                display_asteroid(asteroid1_x, asteroid1_y);
+                
+                 
                 if(SW1 == 0)
                 {
                     lcd_cmd(0x01);
