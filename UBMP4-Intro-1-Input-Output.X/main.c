@@ -1,11 +1,7 @@
 /*==============================================================================
  Project: Final 30 Product
- Date:    June 9, 2022
+ Due Date:    June 22, 2022
 ==============================================================================*/
-
-//-------------------------- BUILD FOR 16F1459  ---------------------------------
-// PIC16F1459 Configuration Bit Settings
-// 'C' source line config statements
 
 #include "UBMP4.h"
 #include <xc.h>
@@ -14,10 +10,6 @@
 #include <stdbool.h>
 #include <time.h>
 #include "PIC16F1459config.h"
-
-
-// Enable ADC and switch the input mux to the specified channel (use channel
-// constants defined in UBMP4.h header file - eg. ANQ1).
 
 //---------------------INIT IO -----------------------------------
 void initIO(void){
@@ -55,9 +47,9 @@ void initIO(void){
 // Pulses E line on LCD to write
 int strobeLCD(void)
 {
-LCD_ENout = 1;
-__delay_us(2);     // Added a little here
-LCD_ENout = 0; 
+	LCD_ENout = 1;
+	__delay_us(2);     // Added a little here
+	LCD_ENout = 0; 
 }
 //--------------------- WRITE 8 BIT DATA TO LCD  -----------------
 // Assumes LCD is ready and RS is set to correct value
@@ -165,7 +157,7 @@ void lcd_LINE2(void)
 //----------------- CUSTOM CHARACTERS --------------------------
 
 unsigned char dinosaur1 [ ] = { 
-    0b00111,
+    	0b00111,
 	0b01010,
 	0b01111,
 	0b01110,
@@ -176,10 +168,10 @@ unsigned char dinosaur1 [ ] = {
 };
 
 unsigned char dinosaur2 [ ] = { 
-    0b00111,
+    	0b00111,
 	0b01010,
 	0b01111,
-    0b01110,
+    	0b01110,
 	0b01110,
 	0b11110,
 	0b01011,
@@ -187,18 +179,18 @@ unsigned char dinosaur2 [ ] = {
 };
 
 unsigned char cactus [ ] = { 
-    0b00100,
+    	0b00100,
 	0b10100,
 	0b10100,
 	0b10101,
 	0b11101,
-    0b00111,
+    	0b00111,
 	0b00100,
 	0b00100
 };
 
 unsigned char bird1 [ ] = { 
-    0b00000,
+    	0b00000,
 	0b00000,
 	0b00000,
 	0b01000,
@@ -209,11 +201,11 @@ unsigned char bird1 [ ] = {
 };
 
 unsigned char bird2 [ ] = {	
-    0b00000,
+    	0b00000,
 	0b00100,
 	0b00110,
 	0b01110,
-    0b11111,
+	0b11111,
 	0b00000,
 	0b00000,
 	0b00000 
