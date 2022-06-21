@@ -25,3 +25,8 @@ really tell if it is workng.
 
 # June 15, 2022
 I started to create a second game. I was having difficulty configuring the joystick because the second game will require both the x and y input.
+
+# June 21, 2022
+I have almost finished the second game. I perfected the movement shooting and I even figured out the issue with the rand() function.
+After I have perfected this game to my liking I am going to try to clean up the repository. I will try to make the documentation more clear
+and put code into sperate files rather than one giant main file.
