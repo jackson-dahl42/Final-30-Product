@@ -3,7 +3,7 @@
  Date: June 22, 2022
  
  This file contains function prototypes from the LCD_lib.c file. There is also
- a defeneition of the LATC data bus. On the microchip RC7-4 is used for the data
+ a definition of the LATC data bus. On the microchip RC7-4 is used for the data
  transfer to the LCD. The RC3 and RC2 are used for RS and EN on the LCD.
 ==============================================================================*/
 
