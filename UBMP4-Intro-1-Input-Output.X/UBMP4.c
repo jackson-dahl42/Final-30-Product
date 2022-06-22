@@ -62,3 +62,17 @@ unsigned char ADC_read_channel(unsigned char channel)
     ADON = 0;                   // Turn the A-D converter off
     return (ADRESH);            // Return the MSB (upper 8-bits) of the result
 }
+
+//======================= SFX =====================================
+
+void tone(unsigned char period)
+{       
+    if(period != 0)
+    {
+        for(unsigned char cycles = 50; cycles != 0; cycles--)
+        {
+            BEEPER = !BEEPER;
+            for(unsigned int p = period; p != 0; p--);
+        }
+    }
+}
