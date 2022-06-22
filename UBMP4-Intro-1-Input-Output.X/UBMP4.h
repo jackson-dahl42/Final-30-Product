@@ -95,3 +95,9 @@ unsigned char ADC_read(void);
 unsigned char ADC_read_channel(unsigned char);
 
 // TODO - Add additional function prototypes for new functions in UBMP4.c here.
+
+#define SW1         PORTAbits.RA3   // S1/Reset pushbutton input
+#define SW2         PORTBbits.RB4   // Pushbutton SW2 input
+#define BEEPER      LATAbits.LATA4  // Piezo beeper (LS1) output
+
+void tone(unsigned char period);
