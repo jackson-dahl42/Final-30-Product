@@ -1,3 +1,11 @@
+/*==============================================================================
+ File: LCD_lib.c
+ Date: June 22, 2022
+ 
+ This file contains functions that can be used with PIC16F1459 microchip to 
+ communicate with the LCD. There is also a function for creating custom characters.
+==============================================================================*/
+
 #include "UBMP4.h"
 #include "LCD_lib.h"
 #include "PIC16F1459config.h"
