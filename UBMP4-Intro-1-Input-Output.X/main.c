@@ -1,297 +1,20 @@
 /*==============================================================================
  Project: Final 30 Product
- Due Date:    June 22, 2022
+ Date:    June 9, 2022
 ==============================================================================*/
-
-#include "UBMP4.h"
 #include <xc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "UBMP4.h"
 #include <time.h>
 #include "PIC16F1459config.h"
+#include "LCD_lib.h"
+#include "dino_game.h"
+#include "defender_game.h"
 
-//---------------------INIT IO -----------------------------------
-void initIO(void){
-    OSCCON = 0b00110100;  // Internal oscillator = 4MHz (for now)
-    TRISC=0b00000011;
-    PORTC=0b00000000;
-    ANSELC=0b00000011;
-    TRISB=0b11110000;
-    WPUB=0b11110000;
-    PORTB=0b00000000;
-    ANSELB=0b00000000;
-    TRISA=0b00001111;
-    PORTA=0b00100000;
-    ANSELA=0b00000000;
-}
-// Enable ADC and switch the input mux to the specified channel (use channel
-// constants defined in UBMP4.h header file - eg. ANQ1).
-
-//---------------------IO DEFINITIONS  --------------------------
-// These are for the 1459 - 1787 uses same..
-#define lcd_port  LATC        // write to LAT, read from PORT
-// RC7-4 is the LCD 4 bit databus
-#define LCD_RSout LATC2     // moved from ICSP
-#define LCD_ENout LATC3
-
-// RC0,RC1 reserved for ICSP DEBUG
-
-//-------------------- DISPLAY SETTINGS  ---------------------
-// Define some display settings.  These could be defined as complete
-// commands as well..
-#define lcdLINE1 0x00       // where line 1 begins
-#define lcdLINE2 0x40       // where line 2 begins
-
-//--------------------- STROBE LCD ---------------------------
-// Pulses E line on LCD to write
-int strobeLCD(void)
+void display_asteroid(int asteroid_x, asteroid_y)
 {
-	LCD_ENout = 1;
-	__delay_us(2);     // Added a little here
-	LCD_ENout = 0; 
-}
-//--------------------- WRITE 8 BIT DATA TO LCD  -----------------
-// Assumes LCD is ready and RS is set to correct value
-// LCD data bus is RC4-RC7
-// Enable cycle time is a side effect of execution time - faster clocks
-// may require a specific delay.
-void writeLCD(unsigned char dat)
-{
-    lcd_port &= 0x0f;               // get current port, clear upper bits
-    lcd_port |= (dat & 0xf0);       // combine w/upper nibble, leave lower same
-    strobeLCD();
-
-    lcd_port &= 0x0f;               // get current port, clear upper bits
-    lcd_port |= ((dat <<4) & (0xf0)); // combine w/lower nibble, leave lower port same
-    strobeLCD();
-    __delay_ms(2);                // wait for display to process
-}
-
-
-//-------------------- WRITE LCD COMMAND  -------------------------
-// Write cmd to LCD with RS=0
-// Assumes E is low and display is NOT busy
-void lcd_cmd (unsigned char cmd)
-{
-    LCD_RSout = 0;       // select command register
-    writeLCD(cmd);
-}
-//---------------------- WRITE LCD DATA  --------------------------
-// Write dat to LCD with RS=1
-// Assumes E is low and display is NOT busy
-void lcd_data (unsigned char dat)
-{
-    LCD_RSout = 1;       // select data register
-    writeLCD(dat);
-}
-
-//--------------------- CREATE CUSTOM CHARACTER -------------------------
-
-void CreateCustomCharacter (unsigned char *Pattern, const char Location)
-{ 
-int i=0; 
-lcd_cmd (0x40+(Location*8));     //Send the Address of CGRAM
-for (i=0; i<8; i++)
-lcd_data (Pattern [ i ] );         //Pass the bytes of pattern on LCD 
-}
-
-//-------------------- RESET/CONFIGURE LCD  -------------------------
-// Delays are generous, trim when able
-
-void lcd_init(void)
-{
-    lcd_port &= 0x0f;   // clear upper bits of LCD port
-    lcd_port |= 0x30;   // direct data to LCD DB7-4
-    LCD_RSout = 0;
-    strobeLCD();        // write 3h, wait 10ms
-    __delay_ms(10);
-    strobeLCD();        // write 3h, wait..
-    __delay_ms(10);
-     strobeLCD();       // write 3h
-    __delay_ms(10);
-
-   lcd_port &= 0x0f;    // clear upper bits of LCD port
-   lcd_port |= 0x20;    // direct data to LCD DB7-4
-   strobeLCD();         // write 2h
-   __delay_ms(10);
-
-    lcd_cmd(0x28);       // Funciton Set: 4-bit mode - 2 line - 5x7 font.
-    lcd_cmd(0x01);       // Clear LCD
-    lcd_cmd(0x06);       // Automatic Increment - No Display shift.
-    lcd_cmd(0x0c);       // Cursor off
-    lcd_cmd(0x80);       // Address DDRAM with 0 offset 80h.
-}
-
-//----------------------- WRITE STRING TO LCD  ---------------------
-// Writes null terminated string to LCD from ROM
-void lcd_WriteStr(const unsigned char *c)
-{
-    while(*c != '\0'){
-        lcd_data(*c);
-        c++;
-    }
-}
-
-//--------------------  SETS CURSOR ANYWHERE IN DISPLAY MEMORY  ---------
-// Valid locations are 0-79 decimal.  This doesn't check for valid location
-
-void lcd_SetCursor(unsigned char loc)
-{
-    lcd_cmd(loc | 0x80);        // form and send 'set DDRAM address' cmd
-}
-
-//----------------- CANNED LINE COMMANDS  -------------------------
-// For a 2 line display
-
-void lcd_LINE1(void)
-{
-    lcd_SetCursor(lcdLINE1);
-}
-
-void lcd_LINE2(void)
-{
-    lcd_SetCursor(lcdLINE2);
-}
-
-//----------------- CUSTOM CHARACTERS --------------------------
-
-unsigned char dinosaur1 [ ] = { 
-    	0b00111,
-	0b01010,
-	0b01111,
-	0b01110,
-	0b01110,
-	0b11110,
-	0b01110,
-	0b00011 
-};
-
-unsigned char dinosaur2 [ ] = { 
-    	0b00111,
-	0b01010,
-	0b01111,
-    	0b01110,
-	0b01110,
-	0b11110,
-	0b01011,
-	0b01100 
-};
-
-unsigned char cactus [ ] = { 
-    	0b00100,
-	0b10100,
-	0b10100,
-	0b10101,
-	0b11101,
-    	0b00111,
-	0b00100,
-	0b00100
-};
-
-unsigned char bird1 [ ] = { 
-    	0b00000,
-	0b00000,
-	0b00000,
-	0b01000,
-	0b11111,
-	0b00110,
-	0b00110,
-	0b00100 
-};
-
-unsigned char bird2 [ ] = {	
-    	0b00000,
-	0b00100,
-	0b00110,
-	0b01110,
-	0b11111,
-	0b00000,
-	0b00000,
-	0b00000 
-};
-
-unsigned char spaceship_bottom[] = {
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b11000,
-	0b01111,
-	0b01111,
-	0b11000
-};
-
-unsigned char spaceship_top[] = {
-	0b11000,
-	0b01111,
-	0b01111,
-	0b11000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000
-};
-
-unsigned char asteroid_bottom[] = {
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b01110,
-	0b01110,
-	0b00000
-};
-
-unsigned char asteroid_top[] = {
-	0b00000,
-	0b01110,
-	0b01110,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000
-};
-
-unsigned char laser_bottom[] = {
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b10101,
-	0b01010,
-	0b00000
-};
-
-unsigned char laser_top[] = {
-	0b00000,
-	0b01010,
-	0b10101,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000
-};
-//======================= SFX =====================================
-
-void tone(unsigned char period)
-{       
-    if(period != 0)
-    {
-        for(unsigned char cycles = 50; cycles != 0; cycles--)
-        {
-            BEEPER = !BEEPER;
-            for(unsigned int p = period; p != 0; p--);
-        }
-    }
-}
-
-            display_asteroid(int asteroid_x, asteroid_y)
-            {
                 if(asteroid_y < 3)
                 {
                     lcd_SetCursor(asteroid_x + 64);
@@ -310,31 +33,10 @@ void tone(unsigned char period)
                 {
                     lcd_data(3);
                 }
-            }
-//======================= MAIN =====================================
+}  
 
+//======================= MAIN =====================================
 int SW2count = 0;
-bool jumping = false;
-char jump_count = 0;
-char animation_count = 0;
-int x, y;
-int speed_count = 0;
-int speed = 3;
-int loop_count = 0;
-bool second_cactus = false;
-char dino = 0;
-bool dino_animation = false;
-char bird = 3;
-bool bird_animation = false;
-char dino_pos = 64;
-char cactus1_pos = 79;
-char cactus2_pos = 80;
-signed char bird_pos = 22;
-bool dino_game = false;
-bool defender_game = false;
-bool game_1 = true;
-int score = 0;
-int random;
 bool SW2Pressed = false;
 
 void main(void)
@@ -350,7 +52,7 @@ void main(void)
     lcd_SetCursor(68);
     lcd_WriteStr("Console!");
 
-    while(1)
+    while(game_console == true)
     {
         y = ADC_read_channel(ANH2);
 
@@ -420,12 +122,11 @@ void main(void)
         CreateCustomCharacter(cactus,2);
         CreateCustomCharacter(bird1,3);
         CreateCustomCharacter(bird2,4);
+        time_t t;
+        srand((unsigned) time(&t));
 
         while(dino_game == true)
         {
-            time_t t;
-            srand((unsigned) time(&t));
-            random = rand();
 
             y = ADC_read_channel(ANH2);
 
@@ -493,13 +194,13 @@ void main(void)
 
             if(cactus1_pos < 63)
             {
-                cactus1_pos = 79 + (random % 5);
+                cactus1_pos = 79 + (rand() % 4);
                 score += 1;
             } 
 
             if(bird_pos < 0)
             {
-                bird_pos = 16 + (random % 5);
+                bird_pos = 16 + (rand() % 4);
                 score += 1;
             }
 
@@ -557,10 +258,8 @@ void main(void)
                 RESET();
             }
             __delay_ms(100);
-        }
-
     }
-
+        }
 
         if(defender_game == true)
         {
@@ -571,48 +270,13 @@ void main(void)
             CreateCustomCharacter(laser_top,4);
             CreateCustomCharacter(laser_bottom,5);
 
-            int spaceship_x = 0;
-            int spaceship_y = 4;
-            int asteroid1_x = 15;
-            int asteroid1_y = 4;
-            int laser_x;
-            int laser_y;
-            int laser_count = 0;
+            time_t t;
+            srand((unsigned) time(&t));
 
             while(defender_game == true)
             {
 
                 // Spaceship Movement
-                asteroid1_x -= 1;
-
-                if(asteroid1_x < 0)
-                {
-                    asteroid1_x = 15;
-                }
-
-                if(laser_count == 0 && SW2 == 0)
-                {
-                    laser_count = 1;
-                }
-
-                if(laser_count > 0)
-                {
-                    if(laser_count == 1)
-                    {
-                        laser_x = spaceship_x;
-                        laser_y = spaceship_y;
-                        laser_count = 2;
-                    }
-
-                    if(laser_count > 1)
-                    {
-                        laser_x += 1;
-                        if(laser_x > 16)
-                        {
-                            laser_count = 0;
-                        }
-                    }
-                }
 
                 x = ADC_read_channel(ANH1);
                 y = ADC_read_channel(ANH2);
@@ -637,7 +301,55 @@ void main(void)
                     spaceship_x -= 1;
                 }
 
-                // Update LCD
+                if(laser_count == 0 && SW2 == 0)
+                {
+                    laser_count = 1;
+                    tone(300);
+                }
+
+                asteroid1_x -= 1;
+                asteroid2_x -= 1;
+                asteroid3_x -= 1;
+
+                if(asteroid1_x < 0)
+                {
+                    asteroid1_x = 15;
+                    asteroid1_y = rand() % 5;
+                }
+
+                if(asteroid2_x < 0)
+                {
+                    asteroid2_x = 15;
+                    asteroid2_y = rand() % 5;
+                }
+
+                if(asteroid3_x < 0)
+                {
+                    asteroid3_x = 15;
+                    asteroid3_y = rand() % 5;
+                }
+
+
+                if(laser_count > 0)
+                {
+                    if(laser_count == 1)
+                    {
+                        laser_x = spaceship_x;
+                        laser_y = spaceship_y;
+                        laser_count = 2;
+                    }
+
+                    if(laser_count > 1)
+                    {
+                        laser_x += 1;
+                        if(laser_x > 16)
+                        {
+                            laser_count = 0;
+                        }
+                    }
+                }
+
+                // Update LCD and Hit detection
                 lcd_cmd(0x01);
 
                 if(spaceship_y < 3)
@@ -679,8 +391,50 @@ void main(void)
                 }
 
                 display_asteroid(asteroid1_x, asteroid1_y);
+                display_asteroid(asteroid2_x, asteroid2_y);
+                display_asteroid(asteroid3_x, asteroid3_y);
+
+                if(laser_x <= asteroid1_x + 1 && laser_x >= asteroid1_x - 1 && asteroid1_y == laser_y)
+                {
+                    asteroid1_x = 16;
+                    asteroid1_y = rand() % 5;
+                    laser_count = 0;
+                    laser_x = 18;
+                    score += 1;
+                }
+
+                if(laser_x <= asteroid2_x + 1 && laser_x >= asteroid2_x - 1 && asteroid2_y == laser_y)
+                {
+                    asteroid2_x = 16;
+                    asteroid2_y = rand() % 5;
+                    laser_count = 0;
+                    laser_x = 18;
+                    score += 1;
+                }
+
+                if(laser_x <= asteroid3_x + 1 && laser_x >= asteroid3_x - 1 && asteroid3_y == laser_y)
+                {
+                    asteroid3_x = 16;
+                    asteroid3_y = rand() % 5;
+                    laser_count = 0;
+                    laser_x = 18;
+                    score += 1;
+                }
+
+                if(spaceship_x <= asteroid1_x + 1 && spaceship_x >= asteroid1_x - 1 && spaceship_y == asteroid1_y || spaceship_x <= asteroid2_x + 1 && spaceship_x >= asteroid2_x - 1 && spaceship_y == asteroid2_y || spaceship_x <= asteroid3_x + 1 && spaceship_x >= asteroid3_x - 1 && spaceship_y == asteroid3_y)
+                {
+                    lcd_cmd(0x01);
+                    lcd_SetCursor(0);
+                    lcd_WriteStr("Game Over");
+                    lcd_SetCursor(63);
+                    lcd_WriteStr("Score: ");
+                    char str[6];
+                    sprintf(str, "%d", score);
+                    lcd_WriteStr(str);
+                    defender_game = false;
+                }
                 
-                 
+                
                 if(SW1 == 0)
                 {
                     lcd_cmd(0x01);
@@ -703,3 +457,6 @@ void main(void)
     }
 }
 
+
+
+ 
