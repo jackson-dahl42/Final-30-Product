@@ -1,6 +1,10 @@
 /*==============================================================================
+ File: main.c
  Project: Final 30 Product
- Date:    June 9, 2022
+ Date:    June 22, 2022
+ 
+ This file is the main file for my UBMP4 game console. It contains the code for
+ the title menu of the game, the dinosaur game, and the defender game.
 ==============================================================================*/
 #include <xc.h>
 #include <stdio.h>
