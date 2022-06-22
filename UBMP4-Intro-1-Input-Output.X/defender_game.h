@@ -1,3 +1,11 @@
+/*==============================================================================
+ File: defender_game.h
+ Date: June 22, 2022
+ 
+ This file all the variables needed for the defender game. The binary characters
+ are the custom characters of the game.
+==============================================================================*/
+
 unsigned char spaceship_bottom[] = {
 	0b00000,
 	0b00000,
