@@ -224,15 +224,32 @@ void main(void)
          
             if(cactus1_pos < 63)
             {
-                cactus1_pos = 79 + (rand() % 4);
+                cactus1_pos = 79 + (rand() % 6);
                 score += 1;
             } 
 
             if(bird_pos < 0)
             {
-                bird_pos = 16 + (rand() % 4);
+                bird_pos = 28 + (rand() % 6);
                 score += 1;
             }
+
+            if(cactus1_pos < bird_pos + 66 && cactus1_pos > bird_pos + 60)
+            {
+                bird_pos = 28 + (rand() % 6);
+            }              
+
+            if(bird_pos < 0)
+            {
+                bird_pos = 28 + (rand() % 6);
+                score += 1;
+            }
+
+            if(cactus1_pos < bird_pos + 66 && cactus1_pos > bird_pos + 60)
+            {
+                bird_pos = 28 + (rand() % 6);
+            }
+         
             // Dino jumping
             // This code detects if the joystick is pushed up, and if it is then it plays a noise
             // and sets the jumping condition to true.
